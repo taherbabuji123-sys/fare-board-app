@@ -361,6 +361,11 @@ app.delete('/api/feedback', verifyAdmin, async (req, res) => {
 
 // Start server function
 function startServer() {
+  // Serve index.html on root path
+  app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index-shared.html'));
+  });
+
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
     console.log(`\n🚀 Server running on http://localhost:${PORT}`);
