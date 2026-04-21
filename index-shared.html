@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Group Fare Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f3f0;
+    --surface: #ffffff;
+    --border: #e5e3dc;
+    --border-strong: #ccc9be;
+    --text: #1a1a18;
+    --text-muted: #6b6960;
+    --text-faint: #a09d94;
+    --accent: #1a4fd6;
+    --accent-light: #e8eefb;
+    --accent-dark: #1240b0;
+    --green: #16a34a;
+    --green-light: #dcfce7;
+    --green-wa: #25D366;
+    --amber: #b45309;
+    --amber-light: #fef3c7;
+    --red: #dc2626;
+    --red-light: #fee2e2;
+    --via: #7c3aed;
+    --via-light: #ede9fe;
+    --radius: 10px;
+    --radius-sm: 6px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; line-height: 1.5; }
+  .container { max-width: 1160px; margin: 0 auto; padding: 0 20px; }
+
+  .site-header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 13px 0; position: sticky; top: 0; z-index: 100; }
+  .site-header .container { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+  .logo-icon { width: 100px; height: 100px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 18px; flex-shrink: 0; overflow: hidden; }
+  .logo-icon img { width: 100%; height: 100%; object-fit: cover; }
+  .logo-name { font-size: 16px; font-weight: 600; color: var(--text); }
+  .header-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+  .nav-wrap { background: var(--surface); border-bottom: 1px solid var(--border); }
+  .nav-tabs { display: flex; }
+  .nav-tab { padding: 12px 18px; font-size: 13px; font-weight: 500; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; background: none; border-top: none; border-left: none; border-right: none; font-family: 'DM Sans', sans-serif; transition: color 0.15s; }
+  .nav-tab:hover { color: var(--text); }
+  .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .main { padding: 24px 0; }
+
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; border: 1px solid transparent; transition: all 0.15s; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent-dark); }
+  .btn-outline { background: var(--surface); color: var(--text-muted); border-color: var(--border-strong); }
+  .btn-outline:hover { background: var(--bg); color: var(--text); }
+  .btn-danger { background: var(--red-light); color: var(--red); border-color: #fca5a5; font-size: 12px; padding: 5px 10px; }
+  .btn-danger:hover { background: #fecaca; }
+  .btn-edit { background: var(--amber-light); color: var(--amber); border-color: #fcd34d; font-size: 12px; padding: 5px 10px; }
+  .btn-edit:hover { background: #fde68a; }
+  .btn-wa { background: var(--green-wa); color: #fff; }
+  .btn-wa:hover { background: #1da851; }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); margin-bottom: 16px; }
+  .card-title { font-size: 11px; font-weight: 600; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+
+  .fares-grid { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+  .fares-header { display: grid; grid-template-columns: 2fr 1.2fr 1.2fr 1.2fr 1fr 1.2fr 0.8fr; gap: 12px; padding: 12px 14px; background: var(--bg); border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); }
+  .fare-row { display: grid; grid-template-columns: 2fr 1.2fr 1.2fr 1.2fr 1fr 1.2fr 0.8fr; gap: 12px; padding: 12px 14px; border-bottom: 1px solid var(--border); align-items: center; }
+  .fare-row:last-child { border-bottom: none; }
+  .fare-row:hover { background: #fafaf8; }
+  
+  .fare-price-highlight { font-size: 18px; font-weight: 900; color: var(--accent); font-family: 'DM Mono', monospace; letter-spacing: -0.5px; }
+  
+  .airline-pill { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; background: var(--accent-light); color: var(--accent-dark); display: inline-block; width: fit-content; }
+  .direct-pill { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; background: var(--green-light); color: var(--green); display: inline-block; width: fit-content; }
+  .connect-pill { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; background: var(--via-light); color: var(--via); display: inline-block; width: fit-content; }
+  .airline-logo { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border); vertical-align: middle; display: block; margin: 0 auto; }
+
+  .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center; }
+  .modal-overlay.active { display: flex; }
+  .modal-content { background: var(--surface); border-radius: var(--radius); max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+  .modal-header { padding: 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .modal-header h2 { margin: 0; font-size: 18px; }
+  .modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-muted); padding: 0; width: 28px; height: 28px; }
+  .modal-close:hover { color: var(--text); }
+  .modal-body { padding: 20px; }
+  .detail-item { margin-bottom: 16px; }
+  .detail-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-faint); margin-bottom: 4px; }
+  .detail-value { font-size: 14px; color: var(--text); font-weight: 500; }
+
+  .ctrl-bar { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; align-items: center; }
+  .ctrl-bar input, .ctrl-bar select { font-size: 13px; padding: 8px 12px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font-family: 'DM Sans', sans-serif; outline: none; }
+  .ctrl-bar input:focus, .ctrl-bar select:focus { border-color: var(--accent); }
+  .ctrl-bar input { flex: 1; min-width: 180px; }
+  .ctrl-bar select { min-width: 140px; }
+
+  .results-count { font-size: 12px; color: var(--text-faint); margin-bottom: 14px; }
+
+  .form-section { margin-bottom: 18px; }
+  .form-section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-faint); margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); display: block; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+  .form-grid.one { grid-template-columns: 1fr; }
+  .form-group label { display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .form-group input, .form-group select, .form-group textarea { width: 100%; font-size: 13px; font-family: 'DM Sans', sans-serif; padding: 8px 10px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); outline: none; }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(26,79,214,0.1); }
+  .form-group .pwd-wrapper { position: relative; margin-bottom: 12px; }
+  .form-group .pwd-wrapper input { padding-right: 38px; }
+  .form-group textarea { resize: vertical; min-height: 60px; }
+  .form-hint { font-size: 11px; color: var(--text-faint); margin-top: 3px; }
+
+  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; padding: 10px 14px; background: var(--bg); color: var(--text-muted); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  td { padding: 11px 14px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #fafaf8; }
+
+  .auth-gate { max-width: 300px; margin: 40px auto; text-align: center; }
+  .auth-gate .lock-icon { font-size: 30px; margin-bottom: 12px; }
+  .auth-gate h3 { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+  .auth-gate p { font-size: 13px; color: var(--text-muted); margin-bottom: 18px; }
+  .pwd-wrapper { position: relative; margin-bottom: 10px; }
+  .pwd-wrapper input { width: 100%; font-size: 14px; font-family: 'DM Sans', sans-serif; padding: 10px 12px; padding-right: 38px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); outline: none; }
+  .pwd-wrapper input:focus { border-color: var(--accent); }
+  .pwd-toggle { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 4px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+  .pwd-toggle:hover { color: var(--text); }
+
+  .sec-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .sec-hdr h3 { font-size: 14px; font-weight: 600; }
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+  .empty-state .icon { font-size: 28px; margin-bottom: 8px; }
+  .empty-state p { font-size: 13px; }
+  .edit-notice { font-size: 12px; color: var(--amber); background: var(--amber-light); padding: 4px 10px; border-radius: 20px; display: none; }
+
+  .copy-link-box { display: flex; gap: 8px; align-items: center; margin-top: 10px; }
+  .copy-link-box input { flex: 1; font-family: 'DM Mono', monospace; font-size: 12px; padding: 7px 10px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--bg); color: var(--text-muted); }
+
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--text); color: #fff; font-size: 13px; padding: 10px 16px; border-radius: var(--radius-sm); z-index: 9999; opacity: 0; transition: opacity 0.2s; pointer-events: none; font-family: 'DM Sans', sans-serif; }
+  .toast.show { opacity: 1; }
+  .section { display: none; }
+  .section.active { display: block; }
+
+  @media (max-width: 640px) {
+    .form-grid, .form-grid.three { grid-template-columns: 1fr; }
+    .fares-grid { grid-template-columns: 1fr; }
+    .hide-mobile { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a class="logo" href="#">
+      <div class="logo-icon"><img src="raj logo2.png" alt="Logo"></div>
+      <span class="logo-name" id="agency-name-display">Group Fare Board</span>
+    </a>
+    <div class="header-actions">
+      <button class="btn btn-wa" onclick="shareWA()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        WhatsApp
+      </button>
+      <button class="btn btn-outline btn-sm" onclick="openFeedbackForm()" style="margin-left:8px">💬 Feedback</button>
+    </div>
+  </div>
+</header>
+
+<div class="nav-wrap">
+  <div class="container">
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="gotoTab('public')">Public board</button>
+      <button class="nav-tab" onclick="gotoTab('admin')">Admin</button>
+      <button class="nav-tab" onclick="gotoTab('settings')">Settings</button>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="container">
+
+    <div id="tab-public" class="section active">
+      <div class="ctrl-bar">
+        <input type="text" placeholder="Search route, via city, airline..." oninput="setFilter('q',this.value)">
+        <select onchange="setFilter('airline',this.value)" id="air-fil"><option value="">All airlines</option></select>
+        <select onchange="setFilter('cur',this.value)">
+          <option value="INR">INR ₹</option><option value="KWD">KWD د.ك</option>
+        </select>
+        <select onchange="setFilter('sort',this.value)">
+          <option value="">Default order</option><option value="price_asc">Price: low → high</option><option value="price_desc">Price: high → low</option><option value="date_asc">Date: earliest first</option><option value="date_desc">Date: latest first</option><option value="route">Route A–Z</option>
+        </select>
+      </div>
+      <div class="results-count" id="results-count"></div>
+      <div class="fares-grid" id="pub-grid"></div>
+      <div id="pub-empty" class="empty-state" style="display:none"><div class="icon">🔍</div><p>No fares match your search.</p></div>
+    </div>
+
+    <div id="tab-admin" class="section">
+      <div id="auth-gate-admin">
+        <div class="auth-gate">
+          <div class="lock-icon">🔐</div><h3>Admin login</h3><p>Enter your password to manage fares</p>
+          <div class="pwd-wrapper"><input type="password" id="pwd" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()"><button class="pwd-toggle" type="button" onclick="togglePwd('pwd')">👁️</button></div>
+          <button class="btn btn-primary" onclick="doLogin()" style="width:100%">Login</button>
+        </div>
+      </div>
+      <div id="admin-panel" style="display:none">
+        <div class="sec-hdr"><h3>Add / edit fares</h3><button class="btn btn-outline btn-sm" onclick="doLogout()">Logout</button></div>
+        <div class="card">
+          <div class="card-title">New fare</div>
+          <div class="form-section"><span class="form-section-label">Route</span>
+            <div class="form-grid three">
+              <div class="form-group"><label>From</label><select id="f-from" onchange="updateToDropdown()"><option value="">Select departure city</option></select></div>
+              <div class="form-group"><label>Via — stopover (optional)</label><input type="text" id="f-via" placeholder="e.g. Dubai (DXB)"><div class="form-hint">Leave blank for direct flights</div></div>
+              <div class="form-group"><label>To</label><select id="f-to" onchange="updateFromDropdown()"><option value="">Select destination city</option></select></div>
+            </div>
+          </div>
+          <div class="form-section"><span class="form-section-label">Pricing</span>
+            <div class="form-grid">
+              <div class="form-group"><label>Airline</label><select id="f-air" onchange="handleAirlineChange()"><option value="">Select or add airline</option><option value="—ADD_NEW—">+ Add new airline</option></select><input type="text" id="f-air-custom" placeholder="Enter new airline name" style="display:none;margin-top:6px"></div>
+              <div class="form-group"><label>Available seats</label><input type="number" id="f-seats" placeholder="e.g. 20" min="1"></div>
+              <div class="form-group"><label>Currency</label><select id="f-cur"><option value="INR">INR ₹ — Indian Rupee</option><option value="KWD">KWD د.ك — Kuwaiti Dinar</option></select></div>
+              <div class="form-group"><label>Price per person</label><input type="number" id="f-price" placeholder="e.g. 18500" min="0"></div>
+            </div>
+          </div>
+          <div class="form-section"><span class="form-section-label">Travel dates</span>
+            <div class="form-grid"><div class="form-group"><label>From date</label><input type="date" id="f-d1"></div><div class="form-group"><label>To date</label><input type="date" id="f-d2"></div></div>
+          </div>
+          <div class="form-section"><span class="form-section-label">Timings</span>
+            <div class="form-grid"><div class="form-group"><label>Departure time</label><input type="time" id="f-dep"></div><div class="form-group"><label>Arrival time</label><input type="time" id="f-arr"></div></div>
+            <div class="form-grid one" style="margin-top:10px"><div class="form-group"><label>Duration / layover details</label><input type="text" id="f-duration" placeholder="e.g. 9h 30m total | 2h layover in Dubai"></div></div>
+          </div>
+          <div class="form-section"><span class="form-section-label">Baggage</span>
+            <div class="form-grid one"><div class="form-group"><label>Baggage allowance</label><input type="text" id="f-baggage" placeholder="e.g. 20 kg | 1 checked bag | 7 kg + 1 checked"></div></div>
+          </div>
+          <div class="form-section"><span class="form-section-label">Additional Notes</span>
+            <div class="form-grid one"><div class="form-group"><label>Special offers, terms, or details</label><textarea id="f-notes" placeholder="e.g. Early bird discount 10% | Must book by April 25 | Includes meal"></textarea></div></div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <button class="btn btn-primary" id="save-btn" onclick="saveFare()">Add fare</button>
+            <button class="btn btn-outline" onclick="clearFareForm()">Clear</button>
+            <span class="edit-notice" id="edit-notice">Editing existing fare</span>
+          </div>
+        </div>
+        <div class="sec-hdr"><h3>Current fares <span id="fare-count" style="font-weight:400;color:var(--text-muted)"></span></h3></div>
+        <div class="table-wrap">
+          <table><thead><tr><th>Route</th><th>Airline</th><th class="hide-mobile">Dates</th><th class="hide-mobile">Timings</th><th>Price</th><th class="hide-mobile">Baggage</th><th class="hide-mobile">Available Seats</th><th>Actions</th></tr></thead><tbody id="adm-body"></tbody></table>
+        </div>
+        <div id="adm-empty" class="empty-state" style="display:none"><div class="icon">✈️</div><p>No fares yet. Add one above.</p></div>
+
+        <div class="sec-hdr"><h3>User feedback 💬 <span id="feedback-count" style="font-weight:400;color:var(--text-muted)"></span></h3><button class="btn btn-outline btn-sm" onclick="loadFeedback()">Refresh</button></div>
+        <div class="table-wrap">
+          <table><thead><tr><th>Name</th><th>Email</th><th class="hide-mobile">Rating</th><th class="hide-mobile">Message</th><th class="hide-mobile">Date</th><th>Action</th></tr></thead><tbody id="fb-body"></tbody></table>
+        </div>
+        <div id="fb-empty" class="empty-state" style="display:none"><div class="icon">💬</div><p>No feedback yet.</p></div>
+      </div>
+    </div>
+
+    <div id="tab-settings" class="section">
+      <div id="auth-gate-settings">
+        <div class="auth-gate">
+          <div class="lock-icon">⚙️</div><h3>Settings login</h3><p>Enter your password to access settings</p>
+          <div class="pwd-wrapper"><input type="password" id="spwd" placeholder="Password" onkeydown="if(event.key==='Enter')doSettingsLogin()"><button class="pwd-toggle" type="button" onclick="togglePwd('spwd')">👁️</button></div>
+          <button class="btn btn-primary" onclick="doSettingsLogin()" style="width:100%">Login</button>
+        </div>
+      </div>
+      <div id="settings-panel" style="display:none">
+        <div class="sec-hdr"><h3>Site settings</h3><button class="btn btn-outline btn-sm" onclick="doSettingsLogout()">Logout</button></div>
+        <div class="card"><div class="card-title">Branding</div>
+          <div class="form-grid" style="margin-bottom:12px">
+            <div class="form-group"><label>Agency / board name</label><input type="text" id="s-name" placeholder="e.g. Al Taher Travels"></div>
+            <div class="form-group"><label>WhatsApp number (with country code)</label><input type="text" id="s-wa" placeholder="e.g. 919876543210"></div>
+          </div>
+          <div class="form-grid one" style="margin-bottom:12px">
+            <div class="form-group"><label>WhatsApp message template</label><textarea id="s-wa-msg" placeholder="Hi! I saw your group fare board and I'm interested in booking."></textarea></div>
+          </div>
+          <button class="btn btn-primary" onclick="saveSettings()">Save branding</button>
+        </div>
+        <div class="card">
+          <div class="card-title">Change password</div>
+          <div class="form-grid" style="margin-bottom:12px">
+            <div class="form-group"><label>Current password</label><div class="pwd-wrapper"><input type="password" id="s-oldpwd" placeholder="Current password"><button class="pwd-toggle" type="button" onclick="togglePwd('s-oldpwd')">👁️</button></div></div>
+            <div class="form-group"><label>New password (min 6 chars)</label><div class="pwd-wrapper"><input type="password" id="s-newpwd" placeholder="New password"><button class="pwd-toggle" type="button" onclick="togglePwd('s-newpwd')">👁️</button></div></div>
+          </div>
+          <button class="btn btn-primary" onclick="changePassword()">Update password</button>
+        </div>
+        <div class="card">
+          <div class="card-title">Exchange rates (INR base)</div>
+          <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">1 INR = ? KWD (update when rates change)</p>
+          <div class="form-grid one" style="margin-bottom:12px">
+            <div class="form-group"><label>KWD exchange rate</label><input type="number" id="s-kwd-rate" placeholder="e.g. 0.0038" min="0" step="0.0001"></div>
+          </div>
+          <button class="btn btn-primary" onclick="saveExchangeRates()">Save rates</button>
+        </div>
+        <div class="card"><div class="card-title">Shareable link</div>
+          <p style="font-size:13px;color:var(--text-muted);margin-bottom:8px">Send this to customers — they always see the latest fares.</p>
+          <div class="copy-link-box"><input type="text" id="page-url" readonly><button class="btn btn-outline" onclick="copyPageLink()">Copy</button></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="modal-overlay" id="details-modal">
+  <div class="modal-content">
+    <div class="modal-header"><h2>Flight Details</h2><button class="modal-close" onclick="closeDetailsModal()">✕</button></div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+<div class="modal-overlay" id="whatsapp-modal">
+  <div class="modal-content" style="max-width:600px">
+    <div class="modal-header"><h2>Select fares to send</h2><button class="modal-close" onclick="closeWhatsAppModal()">✕</button></div>
+    <div class="modal-body">
+      <div id="wa-info" style="background:var(--green-light);border:1px solid var(--green);color:var(--green);padding:10px;border-radius:6px;margin-bottom:12px;font-size:12px"></div>
+      <div id="wa-fares-list" style="max-height:400px;overflow-y:auto"></div>
+      <div style="display:flex;gap:8px;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+        <button class="btn btn-outline" onclick="closeWhatsAppModal()">Cancel</button>
+        <button class="btn btn-wa" onclick="sendSelectedWA()" style="flex:1">Send to WhatsApp</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="feedback-modal">
+  <div class="modal-content">
+    <div class="modal-header"><h2>Send Feedback</h2><button class="modal-close" onclick="closeFeedbackForm()">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group" style="margin-bottom:12px">
+        <label>Your Name</label>
+        <input type="text" id="fb-name" placeholder="Your name">
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>Email (optional)</label>
+        <input type="email" id="fb-email" placeholder="your@email.com">
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>Rating</label>
+        <div style="display:flex;gap:8px;margin-top:6px">
+          <button class="btn btn-outline btn-sm" onclick="setRating(1)" id="rating-1" style="flex:1;background:var(--bg)">😞 Poor</button>
+          <button class="btn btn-outline btn-sm" onclick="setRating(2)" id="rating-2" style="flex:1;background:var(--bg)">😐 Fair</button>
+          <button class="btn btn-outline btn-sm" onclick="setRating(3)" id="rating-3" style="flex:1;background:var(--bg);border-color:var(--accent);color:var(--accent)">😊 Good</button>
+          <button class="btn btn-outline btn-sm" onclick="setRating(4)" id="rating-4" style="flex:1;background:var(--bg)">😄 Great</button>
+          <button class="btn btn-outline btn-sm" onclick="setRating(5)" id="rating-5" style="flex:1;background:var(--bg)">🤩 Excellent</button>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>Message</label>
+        <textarea id="fb-message" placeholder="Tell us what you think..." style="min-height:80px"></textarea>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-outline" onclick="closeFeedbackForm()">Cancel</button>
+        <button class="btn btn-primary" onclick="submitFeedback()" style="flex:1">Send Feedback</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_URL = window.location.origin === 'file://' ? 'http://localhost:5000/api' : window.location.origin + '/api';
+const AIRLINE_LOGOS={
+  'Air Arabia':'air-arabia-logo.png',
+  'Air India':'air-india-logo.png',
+  'Indigo':'indigo-logo.png',
+  'Jazeera':'jazeera-logo.png'
+};
+
+function getAirlineLogo(airline){
+  return AIRLINE_LOGOS[airline] || null;
+}
+const CURRENCIES={INR:{sym:'₹',rate:1},KWD:{sym:'د.ك',rate:0.0038}};
+const AIRPORTS=['Delhi (DEL)','Mumbai (BOM)','Bangalore (BLR)','Hyderabad (HYD)','Chennai (MAA)','Kolkata (CCU)','Pune (PNQ)','Ahmedabad (AMD)','Dubai (DXB)','Abu Dhabi (AUH)','Sharjah (SHJ)','Kuwait (KWI)','Doha (DOH)','Jeddah (JED)','Riyadh (RUH)','London (LHR)','Manchester (MAN)','Paris (CDG)','Frankfurt (FRA)','Amsterdam (AMS)','Brussels (BRU)','Milan (MXP)','Bangkok (BKK)','Singapore (SIN)','Kuala Lumpur (KUL)','Hong Kong (HKG)','Tokyo (NRT)','Seoul (ICN)','New York (JFK)','Los Angeles (LAX)','Toronto (YYZ)','San Francisco (SFO)','Sydney (SYD)','Melbourne (MEL)','Auckland (AKL)'].sort();
+let fares=[],settings={name:'Group Fare Board',wa:'',waMsg:"Hi! I saw your group fares and I'm interested in booking."},filters={q:'',airline:'',cur:'INR',sort:''},editId=null;
+
+async function load(){try{const r=await fetch(`${API_URL}/fares`);if(r.ok)fares=await r.json();}catch(e){console.error('Fares load error:',e);}try{const r=await fetch(`${API_URL}/settings`);if(r.ok){const s=await r.json();console.log('Settings loaded:',s);if(s){if(s.name)settings.name=s.name;if(s.wa)settings.wa=s.wa;if(s.waMsg)settings.waMsg=s.waMsg;}}}catch(e){console.error('Settings load error:',e);}
+const token=localStorage.getItem('token');if(token){document.getElementById('auth-gate-admin').style.display='none';document.getElementById('admin-panel').style.display='block';}const savedKwdRate=localStorage.getItem('kwd_rate');if(savedKwdRate){CURRENCIES.KWD.rate=parseFloat(savedKwdRate);}
+populateAirportDropdowns();populateAirlineDropdown();applySettings();renderAll();const pu=document.getElementById('page-url');if(pu)pu.value=window.location.href;console.log('WhatsApp number loaded:',settings.wa);}
+
+function applySettings(){const el=document.getElementById('agency-name-display');if(el)el.textContent=settings.name||'Group Fare Board';document.title=(settings.name||'Group Fare Board')+' — Group Fares';if(document.getElementById('s-name'))document.getElementById('s-name').value=settings.name||'';if(document.getElementById('s-wa')){document.getElementById('s-wa').value=settings.wa||'';console.log('Applied WhatsApp number in settings form:',settings.wa);}if(document.getElementById('s-wa-msg'))document.getElementById('s-wa-msg').value=settings.waMsg||'';const kwdRateField=document.getElementById('s-kwd-rate');if(kwdRateField)kwdRateField.value=CURRENCIES.KWD.rate.toFixed(4);}
+
+function gotoTab(t){document.querySelectorAll('.nav-tab').forEach((b,i)=>b.classList.toggle('active',['public','admin','settings'][i]===t));document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));document.getElementById('tab-'+t).classList.add('active');if(t==='settings'){applySettings();const pu=document.getElementById('page-url');if(pu)pu.value=window.location.href;}}
+function setFilter(k,v){filters[k]=v;renderPublic();}
+function togglePwd(id){const inp=document.getElementById(id);inp.type=inp.type==='password'?'text':'password';}
+async function doLogin(){const pwd=document.getElementById('pwd').value;try{const res=await fetch(`${API_URL}/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pwd})});if(!res.ok)throw new Error();const data=await res.json();localStorage.setItem('token',data.token);document.getElementById('auth-gate-admin').style.display='none';document.getElementById('admin-panel').style.display='block';document.getElementById('pwd').value='';renderAdmin();loadFeedback();}catch{toast('Invalid password');}}
+function doLogout(){localStorage.removeItem('token');document.getElementById('auth-gate-admin').style.display='block';document.getElementById('admin-panel').style.display='none';document.getElementById('pwd').value='';}
+async function doSettingsLogin(){const pwd=document.getElementById('spwd').value;try{const res=await fetch(`${API_URL}/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pwd})});if(!res.ok)throw new Error();const data=await res.json();localStorage.setItem('token',data.token);document.getElementById('auth-gate-settings').style.display='none';document.getElementById('settings-panel').style.display='block';document.getElementById('spwd').value='';applySettings();const pu=document.getElementById('page-url');if(pu)pu.value=window.location.href;}catch{toast('Invalid password');}}
+function doSettingsLogout(){localStorage.removeItem('token');document.getElementById('auth-gate-settings').style.display='block';document.getElementById('settings-panel').style.display='none';document.getElementById('spwd').value='';}function getToken(){return localStorage.getItem('token');}function setLoading(btn,state){btn.disabled=state;btn.textContent=state?'Loading...':btn.dataset.original||'Submit';}
+
+let feedbackData=[];
+async function loadFeedback(){try{const r=await fetch(`${API_URL}/feedback`,{headers:{'Authorization':getToken()}});if(r.ok){const fb=await r.json();feedbackData=fb;const body=document.getElementById('fb-body'),empty=document.getElementById('fb-empty'),cnt=document.getElementById('feedback-count');cnt.textContent='('+fb.length+')';if(!fb.length){body.innerHTML='';empty.style.display='block';return;}empty.style.display='none';body.innerHTML=fb.map((f,idx)=>`<tr><td style="font-size:12px"><strong>${f.name}</strong></td><td style="font-size:12px;color:var(--text-muted)">${f.email||'—'}</td><td class="hide-mobile" style="font-size:14px">${['','😞','😐','😊','😄','🤩'][f.rating]||'—'}</td><td class="hide-mobile" style="font-size:12px;max-width:300px;word-break:break-word">${f.message}</td><td class="hide-mobile" style="font-size:11px;color:var(--text-muted)">${f.timestamp?new Date(f.timestamp).toLocaleDateString('en-IN'):''}</td><td><button class="btn btn-danger" onclick="deleteFeedback(${idx})">✕ Remove</button></td></tr>`).join('');}else{toast('Failed to load feedback');}}catch(err){console.error(err);toast(err.message||'Error loading feedback');}}
+
+async function deleteFeedback(idx){const f=feedbackData[idx];if(!f)return;if(!confirm(`Delete feedback from ${f.name}?`))return;try{const r=await fetch(`${API_URL}/feedback`,{method:'DELETE',headers:{'Content-Type':'application/json','Authorization':getToken()},body:JSON.stringify({name:f.name,email:f.email,timestamp:f.timestamp})});if(r.ok){toast('✓ Feedback removed.');loadFeedback();}else{toast('Error deleting feedback');}}catch(err){console.error(err);toast(err.message||'Connection error');}}
+
+function shake(id){const el=document.getElementById(id);const w=el.closest('.pwd-wrapper')||el;w.style.borderColor='var(--red)';setTimeout(()=>w.style.borderColor='',1200);}
+
+function populateAirportDropdowns(){const f=document.getElementById('f-from'),t=document.getElementById('f-to');if(!f||!t)return;const fv=f.value,tv=t.value;f.innerHTML='<option value="">Select departure city</option>';t.innerHTML='<option value="">Select destination city</option>';AIRPORTS.forEach(a=>{const fo=document.createElement('option');fo.value=a;fo.textContent=a;if(fo.value!==tv)f.appendChild(fo);const to=document.createElement('option');to.value=a;to.textContent=a;if(to.value!==fv)t.appendChild(to);});f.value=fv;t.value=tv;}
+
+function updateFromDropdown(){const tv=document.getElementById('f-to').value;const fs=document.getElementById('f-from');const cfv=fs.value;fs.innerHTML='<option value="">Select departure city</option>';AIRPORTS.forEach(a=>{if(a!==tv){const o=document.createElement('option');o.value=a;o.textContent=a;fs.appendChild(o);}});fs.value=cfv;}
+
+function updateToDropdown(){const fv=document.getElementById('f-from').value;const ts=document.getElementById('f-to');const ctv=ts.value;ts.innerHTML='<option value="">Select destination city</option>';AIRPORTS.forEach(a=>{if(a!==fv){const o=document.createElement('option');o.value=a;o.textContent=a;ts.appendChild(o);}});ts.value=ctv;}
+
+function populateAirlineDropdown(){const as=document.getElementById('f-air');const cv=as.value;const da=['Air Arabia','Air India','Indigo'];const fa=[...new Set(fares.map(f=>f.airline))].filter(a=>a);const al=[...new Set([...da,...fa])].sort();as.innerHTML='<option value="">Select or add airline</option>';as.innerHTML+='<option value="—ADD_NEW—">+ Add new airline</option>';al.forEach(a=>{const o=document.createElement('option');o.value=a;o.textContent=a;as.appendChild(o);});if(cv&&cv!=='—ADD_NEW—')as.value=cv;}
+
+function handleAirlineChange(){const as=document.getElementById('f-air');const ci=document.getElementById('f-air-custom');if(as.value==='—ADD_NEW—'){ci.style.display='block';ci.value='';ci.focus();}else{ci.style.display='none';ci.value='';}}
+
+function getSelectedAirline(){const as=document.getElementById('f-air');const ci=document.getElementById('f-air-custom');if(as.value==='—ADD_NEW—'){const c=ci.value.trim();if(!c){toast('Please enter airline name');return '';}return c;}return as.value;}
+
+function fmtDate(d){if(!d)return'';return new Date(d+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});}
+function fmtTime(t){if(!t)return'';const[h,m]=t.split(':');const hr=parseInt(h);return(hr%12||12)+':'+m+' '+(hr>=12?'PM':'AM');}
+function fmtPrice(priceINR,cur){const c=CURRENCIES[cur]||CURRENCIES.INR;return c.sym+Math.round(priceINR*c.rate).toLocaleString('en-IN');}
+
+function getSorted(l){const s=filters.sort;if(!s)return l;return[...l].sort((a,b)=>{if(s==='price_asc')return a.price-b.price;if(s==='price_desc')return b.price-a.price;if(s==='date_asc')return(a.dateFrom||'9999')>(b.dateFrom||'9999')?1:-1;if(s==='date_desc')return(a.dateFrom||'0000')<(b.dateFrom||'0000')?1:-1;if(s==='route')return(a.from+a.to).localeCompare(b.from+b.to);return 0;});}
+
+function getFiltered(){const q=filters.q.toLowerCase();return getSorted(fares.filter(f=>{const m=!q||(f.from+f.to+(f.via||'')+f.airline+(f.duration||'')).toLowerCase().includes(q);const am=!filters.airline||f.airline===filters.airline;return m&&am;}));}
+
+function renderPublic(){const l=getFiltered(),g=document.getElementById('pub-grid'),e=document.getElementById('pub-empty'),c=document.getElementById('results-count');const cur=filters.cur||'INR';updateAirlineFilter();if(!l.length){g.innerHTML='';g.style.display='none';e.style.display='block';c.textContent='';return;}g.style.display='block';e.style.display='none';c.textContent=l.length+' fare'+(l.length!==1?'s':'')+' available';let h=`<div class="fares-header"><div>Route</div><div>Airline</div><div>Travel Dates</div><div>Price</div><div>Baggage</div><div>Type</div><div>Action</div></div>`;h+=l.map(f=>{const hv=f.via&&f.via.trim();const logoFile=getAirlineLogo(f.airline);const logoHtml=logoFile?`<img src="${logoFile}" alt="${f.airline}" class="airline-logo">`:`<div style="width:50px;height:50px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;color:var(--text-muted)">${f.airline.substring(0,2).toUpperCase()}</div>`;return`<div class="fare-row"><div><strong style="font-size:15px;font-weight:900;letter-spacing:-0.5px">${f.from}${hv?` → <span style="color:var(--via);font-weight:900">${f.via}</span>`:''} → ${f.to}</strong></div><div style="display:flex;justify-content:center;align-items:center;height:50px">${logoHtml}</div><div><span style="font-size:12px;color:var(--text-muted)">${f.dateFrom?fmtDate(f.dateFrom)+(f.dateTo?' – '+fmtDate(f.dateTo):''):'Open'}</span></div><div><strong class="fare-price-highlight">${fmtPrice(f.price,cur)}</strong></div><div><span style="font-size:12px">${f.baggage||'—'}</span></div><div>${hv?'<span class="connect-pill">Connecting</span>':'<span class="direct-pill">Direct</span>'}</div><div><button class="btn btn-outline btn-sm" onclick="showDetailsModal(${f.id})">Details</button></div></div>`;}).join('');g.innerHTML=h;}
+
+
+function renderAdmin(){const b=document.getElementById('adm-body'),e=document.getElementById('adm-empty'),c=document.getElementById('fare-count');c.textContent='('+fares.length+')';if(!fares.length){b.innerHTML='';e.style.display='block';return;}e.style.display='none';b.innerHTML=fares.map(f=>`<tr><td style="font-size:12px"><strong>${f.from}</strong>${f.via?` <span style="color:var(--via);font-size:10px">→${f.via}</span>`:''} → <strong>${f.to}</strong></td><td style="font-size:12px">${f.airline}</td><td class="hide-mobile" style="font-size:11px;color:var(--text-muted)">${f.dateFrom?fmtDate(f.dateFrom)+(f.dateTo?' – '+fmtDate(f.dateTo):''):'Open'}</td><td class="hide-mobile" style="font-size:11px;color:var(--text-muted)">${f.depTime?fmtTime(f.depTime):''}${f.depTime&&f.arrTime?' → ':''}${f.arrTime?fmtTime(f.arrTime):'—'}</td><td style="font-weight:700;color:var(--accent);font-family:'DM Mono',monospace;font-size:14px">${fmtPrice(f.price,f.currency||'INR')}<br><span style="font-size:10px;color:var(--text-faint);font-weight:400">${f.currency||'INR'}</span></td><td class="hide-mobile" style="font-size:12px;color:var(--text-muted)">${f.baggage||'—'}</td><td class="hide-mobile" style="font-size:12px;color:var(--text-muted)">${f.availableSeats||'—'}</td><td><div style="display:flex;gap:5px;flex-wrap:wrap"><button class="btn btn-edit" onclick="editFare(${f.id})">Edit</button><button class="btn btn-danger" onclick="deleteFare(${f.id})">Delete</button></div></td></tr>`).join('');}
+
+function updateAirlineFilter(){const s=document.getElementById('air-fil'),cu=s.value;const al=[...new Set(fares.map(f=>f.airline))].sort();s.innerHTML='<option value="">All airlines</option>'+al.map(a=>`<option value="${a}"${a===cu?' selected':''}>${a}</option>`).join('');}
+
+async function saveFare(){const f=document.getElementById('f-from').value.trim(),v=document.getElementById('f-via').value.trim(),t=document.getElementById('f-to').value.trim();const a=getSelectedAirline(),c=document.getElementById('f-cur').value;const p=parseFloat(document.getElementById('f-price').value),s=parseInt(document.getElementById('f-seats').value)||0;const d1=document.getElementById('f-d1').value,d2=document.getElementById('f-d2').value;const de=document.getElementById('f-dep').value,ar=document.getElementById('f-arr').value;const du=document.getElementById('f-duration').value.trim();const b=document.getElementById('f-baggage').value.trim();const n=document.getElementById('f-notes').value.trim();if(!f||!t||!a||!p){toast('Please fill From, To, Airline and Price.');return;}
+const pi=p/(CURRENCIES[c]?.rate||1);const fd={from:f,via:v,to:t,airline:a,currency:c,price:pi,availableSeats:s,dateFrom:d1,dateTo:d2,depTime:de,arrTime:ar,duration:du,baggage:b,notes:n};const url=editId?`${API_URL}/fares/${editId}`:`${API_URL}/fares`;const m=editId?'PUT':'POST';try{const r=await fetch(url,{method:m,headers:{'Content-Type':'application/json','Authorization':getToken()},body:JSON.stringify({id:editId||Date.now(),...fd})});if(r.ok){editId=null;document.getElementById('save-btn').textContent='Add fare';document.getElementById('edit-notice').style.display='none';toast(m==='POST'?'Fare added!':'Fare updated!');clearFareForm();load();}else{toast('Error saving fare');}}catch(err){console.error(err);toast(err.message||'Connection error');}}
+
+function editFare(id){const f=fares.find(x=>String(x.id)===String(id));if(!f)return;editId=id;document.getElementById('f-from').value=f.from;document.getElementById('f-to').value=f.to;updateToDropdown();updateFromDropdown();document.getElementById('f-via').value=f.via||'';document.getElementById('f-air').value=f.airline;document.getElementById('f-air-custom').style.display='none';document.getElementById('f-cur').value=f.currency||'INR';document.getElementById('f-price').value=Math.round(f.price*(CURRENCIES[f.currency||'INR']?.rate||1));document.getElementById('f-seats').value=f.availableSeats||'';document.getElementById('f-d1').value=f.dateFrom||'';document.getElementById('f-d2').value=f.dateTo||'';document.getElementById('f-dep').value=f.depTime||'';document.getElementById('f-arr').value=f.arrTime||'';document.getElementById('f-duration').value=f.duration||'';document.getElementById('f-baggage').value=f.baggage||'';document.getElementById('f-notes').value=f.notes||'';document.getElementById('save-btn').textContent='Update fare';document.getElementById('edit-notice').style.display='inline-block';document.getElementById('f-from').scrollIntoView({behavior:'smooth',block:'center'});}
+
+async function deleteFare(id){if(!confirm('Delete this fare?'))return;try{const r=await fetch(`${API_URL}/fares/${String(id)}`,{method:'DELETE',headers:{'Authorization':getToken()}});if(r.ok){toast('Fare deleted.');load();}}catch(err){console.error(err);toast(err.message||'Connection error');}}
+
+function clearFareForm(){['f-from','f-via','f-to','f-price','f-seats','f-d1','f-d2','f-dep','f-arr','f-duration','f-baggage','f-notes'].forEach(id=>document.getElementById(id).value='');document.getElementById('f-air').value='';document.getElementById('f-air-custom').value='';document.getElementById('f-air-custom').style.display='none';document.getElementById('f-cur').value='INR';editId=null;document.getElementById('save-btn').textContent='Add fare';document.getElementById('edit-notice').style.display='none';}
+
+function renderAll(){renderPublic();renderAdmin();}
+
+async function saveSettings(){const n=document.getElementById('s-name').value.trim()||'Group Fare Board';const wa=document.getElementById('s-wa').value.trim();const wm=document.getElementById('s-wa-msg').value.trim();console.log('Saving settings:',{name:n,wa,waMsg:wm});try{const r=await fetch(`${API_URL}/settings`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':getToken()},body:JSON.stringify({name:n,wa,waMsg:wm})});if(r.ok){console.log('Settings saved successfully');settings.name=n;settings.wa=wa;settings.waMsg=wm;await load();applySettings();toast('✓ Settings saved!');}else{const err=await r.text();console.error('Error:',err);toast('❌ Error saving settings');}}catch(err){console.error('Error:',err);toast(err.message||'Connection error');}}
+
+async function changePassword(){const nw=document.getElementById('s-newpwd').value;if(nw.length<6){toast('New password must be at least 6 characters.');shake('s-newpwd');return;}try{const r=await fetch(`${API_URL}/change-password`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':getToken()},body:JSON.stringify({newPassword:nw})});if(r.ok){document.getElementById('s-oldpwd').value='';document.getElementById('s-newpwd').value='';toast('✓ Password updated!');}else{toast('Failed to update password');}}catch(err){console.error(err);toast(err.message||'Connection error');}}
+
+async function saveExchangeRates(){const kwdRate=parseFloat(document.getElementById('s-kwd-rate').value);if(!kwdRate||kwdRate<=0){toast('Please enter a valid KWD rate');return;}
+CURRENCIES.KWD.rate=kwdRate;localStorage.setItem('kwd_rate',kwdRate);toast('✓ Exchange rates updated!');renderAll();}
+
+let waSelectedFares=[];
+function showWhatsAppModal(){console.log('WhatsApp settings:',{wa:settings.wa,waMsg:settings.waMsg});const l=getFiltered();if(!l.length){toast('No fares available to send.');return;}if(!settings.wa||!settings.wa.trim()){toast('⚠️ WhatsApp number not set. Please go to Settings and save your WhatsApp number.');return;}waSelectedFares=[];const ld=document.getElementById('wa-fares-list');const info=document.getElementById('wa-info');info.innerHTML=`📱 WhatsApp: <strong>${settings.wa}</strong> | <strong>${l.length}</strong> fare${l.length!==1?'s':''} available`;ld.innerHTML=l.map((f,i)=>`<div style="padding:12px;border:1px solid var(--border);border-radius:6px;margin-bottom:8px;display:flex;gap:10px;align-items:flex-start"><input type="checkbox" id="wa-fare-${i}" value="${i}" style="margin-top:3px;cursor:pointer;width:18px;height:18px" onchange="updateWASelection()"><div style="flex:1"><div style="font-weight:600;font-size:13px">${f.from}${f.via?' → '+f.via:''} → ${f.to}</div><div style="font-size:12px;color:var(--text-muted);margin-top:2px"><span class="airline-pill" style="display:inline-block;margin-right:6px">${f.airline}</span><strong style="color:var(--accent)">${fmtPrice(f.price,'INR')}</strong></div>${f.dateFrom?'<div style="font-size:11px;color:var(--text-faint);margin-top:4px">'+fmtDate(f.dateFrom)+(f.dateTo?' – '+fmtDate(f.dateTo):'')+'</div>':''}</div></div>`).join('');document.getElementById('whatsapp-modal').classList.add('active');}
+function closeWhatsAppModal(){document.getElementById('whatsapp-modal').classList.remove('active');waSelectedFares=[];}
+function updateWASelection(){waSelectedFares=[];document.querySelectorAll('#wa-fares-list input[type="checkbox"]:checked').forEach(cb=>{waSelectedFares.push(parseInt(cb.value));});}
+function sendSelectedWA(){if(!waSelectedFares.length){toast('Please select at least one fare');return;}if(!settings.wa||!settings.wa.trim()){toast('⚠️ WhatsApp number not set. Go to Settings tab and enter your WhatsApp number (with country code, e.g., 919876543210)');return;}const l=getFiltered();const s=waSelectedFares.map(i=>l[i]).filter(f=>f);let m=(settings.waMsg||'Hi! Check out our group fares:')+'\n\n';s.forEach(f=>{m+=`✈ ${f.from}${f.via?' → '+f.via:''} → ${f.to} (${f.airline})\n`;m+=`   ${fmtPrice(f.price,'INR')} per person`;if(f.availableSeats)m+=` | Available: ${f.availableSeats} seats`;if(f.baggage)m+=` | Baggage: ${f.baggage}`;if(f.depTime||f.arrTime)m+=`\n   Time: ${f.depTime?fmtTime(f.depTime):''}${f.depTime&&f.arrTime?' → ':''}${f.arrTime?fmtTime(f.arrTime):''}`;if(f.dateFrom)m+=`\n   Date: ${fmtDate(f.dateFrom)}`;if(f.duration)m+=`\n   ${f.duration}`;m+='\n\n';});m+='📞 Contact us to book!';const num=settings.wa.replace(/\D/g,'');if(!num){toast('Invalid WhatsApp number');return;}window.open('https://wa.me/'+num+'?text='+encodeURIComponent(m),'_blank');closeWhatsAppModal();}
+function shareWA(){showWhatsAppModal();}
+function copyPageLink(){navigator.clipboard.writeText(window.location.href).then(()=>toast('Link copied!'));}
+
+let toastTimer;
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2500);}
+
+function showDetailsModal(id){const f=fares.find(x=>String(x.id)===String(id));if(!f)return;const cur=filters.cur||'INR';const hv=f.via&&f.via.trim();let d=`<div class="detail-item" style="border-bottom:2px solid var(--border);padding-bottom:16px;margin-bottom:20px"><div style="font-size:20px;font-weight:900;color:var(--text);margin-bottom:10px;letter-spacing:-0.5px">${f.from}${hv?` → ${f.via}`:''} → ${f.to}</div><div style="font-size:32px;font-weight:900;color:var(--accent);font-family:'DM Mono',monospace;letter-spacing:-1.5px;line-height:1">${fmtPrice(f.price,cur)}</div><div style="font-size:13px;color:var(--text-muted);margin-top:6px;font-weight:500">per person</div></div><div class="detail-item"><div class="detail-label">Airline</div><div class="detail-value"><strong>${f.airline}</strong></div></div><div class="detail-item"><div class="detail-label">Available Seats</div><div class="detail-value"><strong>${f.availableSeats||'N/A'}</strong></div></div>`;if(f.dateFrom||f.dateTo){d+=`<div class="detail-item"><div class="detail-label">Travel Dates</div><div class="detail-value">${f.dateFrom?fmtDate(f.dateFrom):''}${f.dateTo?' – '+fmtDate(f.dateTo):''}</div></div>`;}if(f.depTime||f.arrTime){d+=`<div class="detail-item"><div class="detail-label">Departure / Arrival</div><div class="detail-value">${f.depTime?fmtTime(f.depTime):''}${f.depTime&&f.arrTime?' → ':''}${f.arrTime?fmtTime(f.arrTime):''}</div></div>`;}if(f.duration){d+=`<div class="detail-item"><div class="detail-label">Duration / Layover</div><div class="detail-value">${f.duration}</div></div>`;}if(f.baggage){d+=`<div class="detail-item"><div class="detail-label">Baggage Allowance</div><div class="detail-value">${f.baggage}</div></div>`;}d+=`<div class="detail-item"><div class="detail-label">Flight Type</div><div class="detail-value">${hv?'Connecting':'Direct'}</div></div>`;if(f.notes){d+=`<div class="detail-item" style="border-top:2px solid var(--border);padding-top:16px;margin-top:16px;background:var(--accent-light);padding:16px;border-radius:8px;border-top:none"><div class="detail-label" style="color:var(--accent-dark)">Special Notes & Offers</div><div class="detail-value" style="white-space:pre-wrap;font-weight:600;color:var(--accent-dark);font-size:14px">${f.notes}</div></div>`;}document.getElementById('modal-body').innerHTML=d;document.getElementById('details-modal').classList.add('active');}
+
+function closeDetailsModal(){document.getElementById('details-modal').classList.remove('active');}
+
+document.getElementById('details-modal').addEventListener('click',(e)=>{if(e.target===document.getElementById('details-modal'))closeDetailsModal();});
+document.getElementById('whatsapp-modal').addEventListener('click',(e)=>{if(e.target===document.getElementById('whatsapp-modal'))closeWhatsAppModal();});
+document.getElementById('feedback-modal').addEventListener('click',(e)=>{if(e.target===document.getElementById('feedback-modal'))closeFeedbackForm();});
+
+let fbRating=0;
+function openFeedbackForm(){fbRating=0;document.getElementById('fb-name').value='';document.getElementById('fb-email').value='';document.getElementById('fb-message').value='';updateRatingButtons();document.getElementById('feedback-modal').classList.add('active');}
+function closeFeedbackForm(){document.getElementById('feedback-modal').classList.remove('active');fbRating=0;}
+function setRating(r){fbRating=r;updateRatingButtons();}
+function updateRatingButtons(){[1,2,3,4,5].forEach(i=>{const btn=document.getElementById('rating-'+i);if(i<=fbRating){btn.style.background=i===5?'#fef3c7':(i===4?'#dcfce7':(i===3?'#e8eefb':'#fee2e2'));btn.style.color=i===5?'var(--amber)':(i===4?'var(--green)':(i===3?'var(--accent)':'var(--red)'));}else{btn.style.background='var(--bg)';btn.style.color='var(--text-muted)';}});}
+async function submitFeedback(){const name=document.getElementById('fb-name').value.trim();const email=document.getElementById('fb-email').value.trim();const msg=document.getElementById('fb-message').value.trim();if(!name||!msg){toast('Please enter your name and message.');return;}if(!fbRating){toast('Please select a rating.');return;}try{const r=await fetch(`${API_URL}/feedback`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,rating:fbRating,message:msg,timestamp:new Date().toISOString()})});if(r.ok){toast('✓ Thank you for your feedback!');closeFeedbackForm();}else{toast('Error sending feedback');}}catch(err){toast('Connection error');}}
+
+load();
+
+</script>
+</body>
+</html>
