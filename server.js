@@ -13,6 +13,7 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.static(path.join(__dirname, '.')));
 
 // SQLite Database Setup - use root directory on Railway
 const dbPath = path.join(__dirname, 'fares.db');
