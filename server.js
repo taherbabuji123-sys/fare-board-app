@@ -1,75 +1,55 @@
 require('dotenv').config();
 const express = require('express');
-const sqlite3 = require('sqlite3').verbose();
+const { Pool } = require('pg');
 const cors = require('cors');
 const path = require('path');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
+const DATABASE_URL = process.env.DATABASE_URL;
 
 const app = express();
+
+// PostgreSQL Connection Pool
+const pool = new Pool({
+  connectionString: DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+});
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '.')));
 
-// SQLite Database Setup - use root directory on Railway
-const dbPath = path.join(__dirname, 'fares.db');
-const db = new sqlite3.Database(dbPath, (err) => {
-  if (err) {
-    console.error('Database error:', err);
-    process.exit(1);
-  } else {
-    console.log('Connected to SQLite database');
-    initializeDatabase();
-    setTimeout(() => {
-      startServer();
-    }, 1000);
-  }
-});
-
-// Promise wrappers for SQLite
+// Database query helpers
 const dbRun = (sql, params = []) => {
-  return new Promise((resolve, reject) => {
-    db.run(sql, params, function(err) {
-      if (err) reject(err);
-      else resolve(this);
-    });
-  });
+  return pool.query(sql, params);
 };
 
-const dbGet = (sql, params = []) => {
-  return new Promise((resolve, reject) => {
-    db.get(sql, params, (err, row) => {
-      if (err) reject(err);
-      else resolve(row);
-    });
-  });
+const dbGet = async (sql, params = []) => {
+  const result = await pool.query(sql, params);
+  return result.rows[0] || null;
 };
 
-const dbAll = (sql, params = []) => {
-  return new Promise((resolve, reject) => {
-    db.all(sql, params, (err, rows) => {
-      if (err) reject(err);
-      else resolve(rows || []);
-    });
-  });
+const dbAll = async (sql, params = []) => {
+  const result = await pool.query(sql, params);
+  return result.rows || [];
 };
 
 // Initialize Database
-function initializeDatabase() {
-  db.serialize(() => {
-    db.run(`
+async function initializeDatabase() {
+  try {
+    // Create tables if they don't exist
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS fares (
         id TEXT PRIMARY KEY,
-        \`from\` TEXT NOT NULL,
+        "from" TEXT NOT NULL,
         via TEXT,
-        \`to\` TEXT NOT NULL,
+        "to" TEXT NOT NULL,
         airline TEXT NOT NULL,
         currency TEXT NOT NULL,
-        price REAL NOT NULL,
+        price NUMERIC NOT NULL,
         available_seats INTEGER,
         date_from TEXT,
         dep_time TEXT,
@@ -77,43 +57,45 @@ function initializeDatabase() {
         duration TEXT,
         baggage TEXT,
         notes TEXT,
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
-    db.run(`
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS settings (
-        id INTEGER PRIMARY KEY,
+        id SERIAL PRIMARY KEY,
         agency_name TEXT,
         whatsapp_number TEXT,
         whatsapp_message TEXT,
         admin_password TEXT,
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
-    `, async () => {
-      db.get('SELECT COUNT(*) as count FROM settings', async (err, row) => {
-        if (!err && row.count === 0) {
-          const hashedPassword = await bcrypt.hash('admin123', 10);
-          db.run(
-            'INSERT INTO settings (agency_name, whatsapp_number, whatsapp_message, admin_password) VALUES (?, ?, ?, ?)',
-            ['Group Fare Board', '', 'Hi! I saw your group fares and I\'m interested in booking.', hashedPassword],
-            () => console.log('✓ Default settings created')
-          );
-        }
-      });
-    });
+    `);
 
-    db.run(`
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS feedback (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         name TEXT NOT NULL,
         email TEXT,
         rating INTEGER,
         message TEXT NOT NULL,
-        timestamp TEXT DEFAULT CURRENT_TIMESTAMP
+        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
-  });
+
+    // Check if default settings exist
+    const result = await pool.query('SELECT COUNT(*) as count FROM settings');
+    if (result.rows[0].count === 0) {
+      const hashedPassword = await bcrypt.hash('admin123', 10);
+      await pool.query(
+        'INSERT INTO settings (agency_name, whatsapp_number, whatsapp_message, admin_password) VALUES ($1, $2, $3, $4)',
+        ['Group Fare Board', '', 'Hi! I saw your group fares and I\'m interested in booking.', hashedPassword]
+      );
+      console.log('✓ Default settings created');
+    }
+  } catch (err) {
+    console.error('Database initialization error:', err);
+  }
 }
 
 // JWT authentication middleware
@@ -197,7 +179,7 @@ app.post('/api/fares', verifyAdmin, async (req, res) => {
     }
     
     await dbRun(
-      'INSERT INTO fares (id, `from`, via, `to`, airline, currency, price, available_seats, date_from, dep_time, arr_time, duration, baggage, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO fares (id, "from", via, "to", airline, currency, price, available_seats, date_from, dep_time, arr_time, duration, baggage, notes) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)',
       [String(id), from, via, to, airline, currency, price, availableSeats, dateFrom, depTime, arrTime, duration, baggage, notes]
     );
     
@@ -213,7 +195,7 @@ app.put('/api/fares/:id', verifyAdmin, async (req, res) => {
     const { from, via, to, airline, currency, price, availableSeats, dateFrom, depTime, arrTime, duration, baggage, notes } = req.body;
     
     await dbRun(
-      'UPDATE fares SET `from`=?, via=?, `to`=?, airline=?, currency=?, price=?, available_seats=?, date_from=?, dep_time=?, arr_time=?, duration=?, baggage=?, notes=? WHERE id=?',
+      'UPDATE fares SET "from"=$1, via=$2, "to"=$3, airline=$4, currency=$5, price=$6, available_seats=$7, date_from=$8, dep_time=$9, arr_time=$10, duration=$11, baggage=$12, notes=$13 WHERE id=$14',
       [from, via, to, airline, currency, price, availableSeats, dateFrom, depTime, arrTime, duration, baggage, notes, req.params.id]
     );
     
@@ -226,7 +208,7 @@ app.put('/api/fares/:id', verifyAdmin, async (req, res) => {
 // Delete fare (ADMIN ONLY)
 app.delete('/api/fares/:id', verifyAdmin, async (req, res) => {
   try {
-    await dbRun('DELETE FROM fares WHERE id=?', [req.params.id]);
+    await dbRun('DELETE FROM fares WHERE id=$1', [req.params.id]);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -263,12 +245,12 @@ app.post('/api/settings', verifyAdmin, async (req, res) => {
     
     if (existing) {
       await dbRun(
-        'UPDATE settings SET agency_name=?, whatsapp_number=?, whatsapp_message=? WHERE id=?',
+        'UPDATE settings SET agency_name=$1, whatsapp_number=$2, whatsapp_message=$3 WHERE id=$4',
         [name, wa, waMsg, existing.id]
       );
     } else {
       await dbRun(
-        'INSERT INTO settings (agency_name, whatsapp_number, whatsapp_message) VALUES (?, ?, ?)',
+        'INSERT INTO settings (agency_name, whatsapp_number, whatsapp_message) VALUES ($1, $2, $3)',
         [name, wa, waMsg]
       );
     }
@@ -292,13 +274,13 @@ app.post('/api/change-password', verifyAdmin, async (req, res) => {
     if (existing) {
       const hashed = await bcrypt.hash(newPassword, 10);
       await dbRun(
-        'UPDATE settings SET admin_password=? WHERE id=?',
+        'UPDATE settings SET admin_password=$1 WHERE id=$2',
         [hashed, existing.id]
       );
     } else {
       const hashed = await bcrypt.hash(newPassword, 10);
       await dbRun(
-        'INSERT INTO settings (admin_password) VALUES (?)',
+        'INSERT INTO settings (admin_password) VALUES ($1)',
         [hashed]
       );
     }
@@ -319,7 +301,7 @@ app.post('/api/feedback', async (req, res) => {
     }
     
     await dbRun(
-      'INSERT INTO feedback (name, email, rating, message, timestamp) VALUES (?, ?, ?, ?, ?)',
+      'INSERT INTO feedback (name, email, rating, message, timestamp) VALUES ($1, $2, $3, $4, $5)',
       [name, email || '', rating || 0, message, timestamp || new Date().toISOString()]
     );
     
@@ -349,7 +331,7 @@ app.delete('/api/feedback', verifyAdmin, async (req, res) => {
     }
     
     await dbRun(
-      'DELETE FROM feedback WHERE name = ? AND email = ? AND timestamp = ?',
+      'DELETE FROM feedback WHERE name = $1 AND email = $2 AND timestamp = $3',
       [name, email || '', timestamp]
     );
     
@@ -360,7 +342,7 @@ app.delete('/api/feedback', verifyAdmin, async (req, res) => {
 });
 
 // Start server function
-function startServer() {
+async function startServer() {
   // Serve index.html on root path
   app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index-shared.html'));
@@ -369,7 +351,14 @@ function startServer() {
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
     console.log(`\n🚀 Server running on http://localhost:${PORT}`);
-    console.log(`✓ Using SQLite database: ${dbPath}`);
-    console.log(`✓ JWT Secret: ${JWT_SECRET}\n`);
+    console.log(`✓ Using PostgreSQL database\n`);
   });
 }
+
+// Initialize and start
+initializeDatabase().then(() => {
+  startServer();
+}).catch(err => {
+  console.error('Failed to initialize database:', err);
+  process.exit(1);
+});
