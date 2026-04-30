@@ -6,16 +6,18 @@ const path = require('path');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
-const DATABASE_URL = process.env.DATABASE_URL;
+ const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
+  // Railway provides DATABASE_URL or RAILWAY_DATABASE_URL
+  const DATABASE_URL = process.env.DATABASE_URL || process.env.RAILWAY_DATABASE_URL;
 
-const app = express();
+  const app = express();
 
-// PostgreSQL Connection Pool
-const pool = new Pool({
-  connectionString: DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
-});
+  // PostgreSQL Connection Pool
+  if (!DATABASE_URL) {
+    console.error('ERROR: DATABASE_URL is not set!');
+    console.error('Set DATABASE_URL environment variable in Railway dashboard');
+    console.error('Or check if Railway database is provisioned');
+    process.exit(1);
 
 // Middleware
 app.use(cors());
