@@ -1,12 +1,12 @@
-require('dotenv').config();
-const express = require('express');
-const { Pool } = require('pg');
-const cors = require('cors');
-const path = require('path');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
+ require('dotenv').config();
+  const express = require('express');
+  const { Pool } = require('pg');
+  const cors = require('cors');
+  const path = require('path');
+  const bcrypt = require('bcrypt');
+  const jwt = require('jsonwebtoken');
 
- const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
+  const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
   // Railway provides DATABASE_URL or RAILWAY_DATABASE_URL
   const DATABASE_URL = process.env.DATABASE_URL || process.env.RAILWAY_DATABASE_URL;
 
@@ -18,11 +18,12 @@ const jwt = require('jsonwebtoken');
     console.error('Set DATABASE_URL environment variable in Railway dashboard');
     console.error('Or check if Railway database is provisioned');
     process.exit(1);
+  }
 
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.static(path.join(__dirname, '.')));
+  const pool = new Pool({
+    connectionString: DATABASE_URL,
+    ssl: { rejectUnauthorized: false }
+  });
 
 // Database query helpers
 const dbRun = (sql, params = []) => {
